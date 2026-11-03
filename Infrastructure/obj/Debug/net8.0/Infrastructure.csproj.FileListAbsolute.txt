@@ -1,0 +1,61 @@
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/bin/Debug/net8.0/Infrastructure.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/bin/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/bin/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.AssemblyReference.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastr.15EFFBFE.Up2Date
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/refint/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo/Infrastructure/obj/Debug/net8.0/ref/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/bin/Debug/net8.0/Infrastructure.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/bin/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/bin/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.AssemblyReference.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastr.15EFFBFE.Up2Date
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/refint/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Infrastructure/obj/Debug/net8.0/ref/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.AssemblyReference.cache
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.sourcelink.json
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastr.15EFFBFE.Up2Date
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/refint/Infrastructure.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.pdb
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Infrastructure/obj/Debug/net8.0/ref/Infrastructure.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.deps.json
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/bin/Debug/net8.0/Infrastructure.pdb
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/bin/Debug/net8.0/Core.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/bin/Debug/net8.0/Core.pdb
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.AssemblyReference.cache
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfoInputs.cache
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.AssemblyInfo.cs
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.csproj.CoreCompileInputs.cache
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastr.15EFFBFE.Up2Date
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/refint/Infrastructure.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/Infrastructure.pdb
+/Users/dittebergbertelsen/DEV/Recruitment-test/Infrastructure/obj/Debug/net8.0/ref/Infrastructure.dll

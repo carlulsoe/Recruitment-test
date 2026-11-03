@@ -1,0 +1,45 @@
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/bin/Debug/net8.0/Core.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/refint/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo/Core/obj/Debug/net8.0/ref/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/bin/Debug/net8.0/Core.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/refint/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Todo project/Core/obj/Debug/net8.0/ref/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/bin/Debug/net8.0/Core.deps.json
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/bin/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/bin/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.AssemblyInfoInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.AssemblyInfo.cs
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.csproj.CoreCompileInputs.cache
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.sourcelink.json
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/refint/Core.dll
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/Core.pdb
+/Users/larsbjerregaardjorgensen/Documents/Recruitment-test/Core/obj/Debug/net8.0/ref/Core.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/bin/Debug/net8.0/Core.deps.json
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/bin/Debug/net8.0/Core.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/bin/Debug/net8.0/Core.pdb
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.AssemblyInfoInputs.cache
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.AssemblyInfo.cs
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.csproj.CoreCompileInputs.cache
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/refint/Core.dll
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/Core.pdb
+/Users/dittebergbertelsen/DEV/Recruitment-test/Core/obj/Debug/net8.0/ref/Core.dll
