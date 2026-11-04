@@ -25,6 +25,9 @@ public class TodosApiTests : IDisposable
     private async Task<List<TodoResponse>> GetTodos() =>
         (await _client.GetFromJsonAsync<List<TodoResponse>>("/api/todos"))!;
 
+    private Task<HttpResponseMessage> SetCompletion(Guid id, bool isComplete) =>
+        _client.PutAsJsonAsync($"/api/todos/{id}/completion", new { isComplete });
+
     [Fact]
     public async Task List_starts_empty()
     {
@@ -97,17 +100,40 @@ public class TodosApiTests : IDisposable
     }
 
     [Fact]
-    public async Task Toggle_marks_a_todo_complete_and_back()
+    public async Task Completion_marks_a_todo_complete_and_back()
     {
         var todo = await CreateTodo("Buy milk");
 
-        var completed = await _client.PostAsync($"/api/todos/{todo.Id}/toggle", null);
+        var completed = await SetCompletion(todo.Id, true);
         var body = await completed.Content.ReadFromJsonAsync<TodoResponse>();
         Assert.True(body!.IsComplete);
         Assert.NotNull(body.CompletedAt);
         Assert.True((await GetTodos()).Single().IsComplete);
 
-        await _client.PostAsync($"/api/todos/{todo.Id}/toggle", null);
+        await SetCompletion(todo.Id, false);
+        Assert.False((await GetTodos()).Single().IsComplete);
+    }
+
+    [Fact]
+    public async Task Completion_can_safely_be_repeated()
+    {
+        var todo = await CreateTodo("Buy milk");
+
+        var first = await (await SetCompletion(todo.Id, true)).Content.ReadFromJsonAsync<TodoResponse>();
+        var second = await (await SetCompletion(todo.Id, true)).Content.ReadFromJsonAsync<TodoResponse>();
+
+        Assert.True(second!.IsComplete);
+        Assert.Equal(first!.CompletedAt, second.CompletedAt);
+    }
+
+    [Fact]
+    public async Task Completion_rejects_a_request_without_the_state()
+    {
+        var todo = await CreateTodo("Buy milk");
+
+        var response = await _client.PutAsJsonAsync($"/api/todos/{todo.Id}/completion", new { });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.False((await GetTodos()).Single().IsComplete);
     }
 
@@ -128,7 +154,7 @@ public class TodosApiTests : IDisposable
         var id = Guid.NewGuid();
 
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/todos/{id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await _client.PostAsync($"/api/todos/{id}/toggle", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await SetCompletion(id, true)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync($"/api/todos/{id}")).StatusCode);
     }
 }

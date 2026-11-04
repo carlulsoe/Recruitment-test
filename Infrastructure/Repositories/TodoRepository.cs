@@ -54,12 +54,12 @@ public class TodoRepository : ITodoRepository
         }
     }
 
-    public Todo? ToggleTodo(Guid id)
+    public Todo? SetComplete(Guid id, bool isComplete)
     {
         lock (_lock)
         {
             var todo = Find(id);
-            todo?.Toggle();
+            todo?.SetComplete(isComplete);
             return todo is null ? null : Copy(todo);
         }
     }

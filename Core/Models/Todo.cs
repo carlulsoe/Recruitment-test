@@ -8,9 +8,12 @@ public class Todo
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
 
-    public void Toggle()
+    /// <summary>Repeating a state changes nothing, so CompletedAt keeps its original time.</summary>
+    public void SetComplete(bool isComplete)
     {
-        IsComplete = !IsComplete;
-        CompletedAt = IsComplete ? DateTime.UtcNow : null;
+        if (IsComplete == isComplete) return;
+
+        IsComplete = isComplete;
+        CompletedAt = isComplete ? DateTime.UtcNow : null;
     }
 }

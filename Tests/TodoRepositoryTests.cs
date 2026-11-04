@@ -29,17 +29,29 @@ public class TodoRepositoryTests
     }
 
     [Fact]
-    public void ToggleTodo_sets_and_clears_completion()
+    public void SetComplete_sets_and_clears_completion()
     {
-        var id = _repository.Create(new TodoItem { Title = "Toggle me" }).Id;
+        var id = _repository.Create(new TodoItem { Title = "Finish me" }).Id;
 
-        var completed = _repository.ToggleTodo(id);
+        var completed = _repository.SetComplete(id, true);
         Assert.True(completed!.IsComplete);
         Assert.NotNull(completed.CompletedAt);
 
-        var reopened = _repository.ToggleTodo(id);
+        var reopened = _repository.SetComplete(id, false);
         Assert.False(reopened!.IsComplete);
         Assert.Null(reopened.CompletedAt);
+    }
+
+    [Fact]
+    public void SetComplete_twice_keeps_the_first_completion_time()
+    {
+        var id = _repository.Create(new TodoItem { Title = "Finish me" }).Id;
+
+        var first = _repository.SetComplete(id, true)!.CompletedAt;
+        Thread.Sleep(5);
+        var second = _repository.SetComplete(id, true)!.CompletedAt;
+
+        Assert.Equal(first, second);
     }
 
     [Fact]
@@ -60,7 +72,7 @@ public class TodoRepositoryTests
         var missing = Guid.NewGuid();
 
         Assert.Null(_repository.GetById(missing));
-        Assert.Null(_repository.ToggleTodo(missing));
+        Assert.Null(_repository.SetComplete(missing, true));
         Assert.False(_repository.Delete(missing));
     }
 

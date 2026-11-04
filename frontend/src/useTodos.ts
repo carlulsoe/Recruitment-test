@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { createTodo, deleteTodo, getTodos, toggleTodo, type Todo } from "./api";
+import { createTodo, deleteTodo, getTodos, setTodoComplete, type Todo } from "./api";
 
 const todosKey = ["todos"];
 
@@ -33,23 +33,23 @@ export function useCreateTodo() {
 }
 
 /** Optimistic, because a checkbox should respond at once. A failure rolls it back. */
-export function useToggleTodo(id: string) {
+export function useSetTodoComplete(id: string) {
   const queryClient = useQueryClient();
 
-  const flipInCache = () =>
+  const setInCache = (isComplete: boolean) =>
     queryClient.setQueryData<Todo[]>(todosKey, (todos) =>
-      todos?.map((todo) => (todo.id === id ? { ...todo, isComplete: !todo.isComplete } : todo)),
+      todos?.map((todo) => (todo.id === id ? { ...todo, isComplete } : todo)),
     );
 
   return useMutation({
     mutationKey: todosKey,
-    mutationFn: () => toggleTodo(id),
-    onMutate: async () => {
+    mutationFn: (isComplete: boolean) => setTodoComplete(id, isComplete),
+    onMutate: async (isComplete) => {
       await queryClient.cancelQueries({ queryKey: todosKey });
-      flipInCache();
+      setInCache(isComplete);
     },
-    // Flips back rather than restoring a snapshot, which would also undo other rows.
-    onError: flipInCache,
+    // Changes this row only. Restoring a snapshot of the list would also undo other rows.
+    onError: (_error, isComplete) => setInCache(!isComplete),
     onSettled: () => refetchWhenLastChangeSettles(queryClient),
   });
 }

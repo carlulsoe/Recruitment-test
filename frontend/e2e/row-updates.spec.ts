@@ -7,7 +7,7 @@ async function holdToggle(page: Page, title: string) {
   const id = todos.find((todo) => todo.title === title)!.id;
   let held: Route | undefined;
   const isHeld = new Promise<void>((resolve) => {
-    void page.route(`**/api/todos/${id}/toggle`, (route) => {
+    void page.route(`**/api/todos/${id}/*`, (route) => {
       held = route;
       resolve();
     });
@@ -22,7 +22,7 @@ test("a finished toggle does not undo another row's pending toggle", async ({ to
 
   await checkbox(page, "Slow").click();
   await slow.isHeld;
-  const fastDone = page.waitForResponse("**/toggle");
+  const fastDone = page.waitForResponse("**/api/todos/*/*");
   await checkbox(page, "Fast").click();
   await fastDone;
 
@@ -67,4 +67,43 @@ test("a row's old error goes away when another action on it starts", async ({ to
 
   await expect(page.getByText("1 of 1 done")).toBeVisible();
   await expect(milk.getByRole("alert")).toBeHidden();
+});
+
+/** What the browser reports when the user returns to the tab. TanStack Query refetches on it. */
+async function returnToTab(page: Page) {
+  await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
+}
+
+test("a failed toggle agrees with the server even after a refetch", async ({ todoPage: page }) => {
+  await addTodo(page, "Buy milk");
+  const held = await holdToggle(page, "Buy milk");
+
+  await checkbox(page, "Buy milk").click();
+  await held.isHeld;
+  await returnToTab(page);
+  await page.waitForTimeout(500);
+  // With the list unavailable too, no later refetch can hide a wrong rollback.
+  await page.route("**/api/todos", (route) => route.abort());
+  await held.route().fulfill({ status: 500 });
+
+  await expect(row(page, "Buy milk").getByRole("alert")).toBeVisible();
+  await expect(checkbox(page, "Buy milk")).not.toBeChecked();
+  await expect(page.getByText("0 of 1 done")).toBeVisible();
+});
+
+test("marking a todo done in a stale tab keeps it done", async ({ todoPage: page }) => {
+  await addTodo(page, "Buy milk");
+  const staleTab = await page.context().newPage();
+  await staleTab.goto("/");
+  await expect(checkbox(staleTab, "Buy milk")).not.toBeChecked();
+
+  await checkbox(page, "Buy milk").click();
+  await expect(page.getByText("1 of 1 done")).toBeVisible();
+
+  const done = staleTab.waitForResponse("**/api/todos/*/*");
+  await checkbox(staleTab, "Buy milk").click();
+  await done;
+
+  await expect(staleTab.getByText("1 of 1 done")).toBeVisible();
+  await expect(checkbox(staleTab, "Buy milk")).toBeChecked();
 });

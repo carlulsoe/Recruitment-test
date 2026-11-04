@@ -31,8 +31,12 @@ export async function createTodo(title: string): Promise<Todo> {
   return response.json();
 }
 
-export async function toggleTodo(id: string): Promise<Todo> {
-  const response = await request(`/${id}/toggle`, { method: "POST" });
+export async function setTodoComplete(id: string, isComplete: boolean): Promise<Todo> {
+  const response = await request(`/${id}/completion`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isComplete }),
+  });
   return response.json();
 }
 

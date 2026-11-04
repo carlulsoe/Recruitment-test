@@ -26,10 +26,10 @@ public class TodosController(ITodoRepository repository) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, TodoResponse.From(todo));
     }
 
-    [HttpPost("{id:guid}/toggle")]
-    public ActionResult<TodoResponse> Toggle(Guid id)
+    [HttpPut("{id:guid}/completion")]
+    public ActionResult<TodoResponse> SetCompletion(Guid id, SetCompletionRequest request)
     {
-        var todo = repository.ToggleTodo(id);
+        var todo = repository.SetComplete(id, request.IsComplete);
         return todo is null ? NotFound() : TodoResponse.From(todo);
     }
 

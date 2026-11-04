@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { MAX_TITLE_LENGTH, type Todo } from "./api";
-import { useCreateTodo, useDeleteTodo, useTodos, useToggleTodo } from "./useTodos";
+import { useCreateTodo, useDeleteTodo, useSetTodoComplete, useTodos } from "./useTodos";
 
 export function App() {
   return (
@@ -88,7 +88,7 @@ function TodoList() {
 }
 
 function TodoRow({ todo }: { todo: Todo }) {
-  const toggleTodo = useToggleTodo(todo.id);
+  const setComplete = useSetTodoComplete(todo.id);
   const deleteTodo = useDeleteTodo(todo.id);
 
   return (
@@ -98,10 +98,10 @@ function TodoRow({ todo }: { todo: Todo }) {
           type="checkbox"
           checked={todo.isComplete}
           // Ignored rather than disabled, so keyboard users keep their focus here.
-          onChange={() => {
-            if (toggleTodo.isPending || deleteTodo.isPending) return;
+          onChange={(event) => {
+            if (setComplete.isPending || deleteTodo.isPending) return;
             deleteTodo.reset();
-            toggleTodo.mutate();
+            setComplete.mutate(event.target.checked);
           }}
         />
         <span className={todo.isComplete ? "todo-title complete" : "todo-title"}>{todo.title}</span>
@@ -111,13 +111,14 @@ function TodoRow({ todo }: { todo: Todo }) {
         aria-label={`Delete ${todo.title}`}
         disabled={deleteTodo.isPending}
         onClick={() => {
-          toggleTodo.reset();
+          // Only a finished failure: resetting a pending change would lift its guard above.
+          if (setComplete.isError) setComplete.reset();
           deleteTodo.mutate();
         }}
       >
         Delete
       </button>
-      {(toggleTodo.isError || deleteTodo.isError) && (
+      {(setComplete.isError || deleteTodo.isError) && (
         <p className="error" role="alert">
           Could not save that change. Please try again.
         </p>
