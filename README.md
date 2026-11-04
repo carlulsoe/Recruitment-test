@@ -35,13 +35,19 @@ npm run dev
 Then open <http://localhost:5173>. Vite reloads the frontend on changes and forwards API calls to
 the backend on port 5135.
 
+Port 5135 serves only the API until the frontend has been built, so starting just the backend, for
+example with Run in an IDE, gives a 404 at `/`. To have the backend serve the app on port 5135, run
+`npm run build` in `frontend` once and restart the backend.
+
 ### Tests
 
 ```sh
 dotnet test
 ```
 
-The frontend is linted with Oxlint, including a set of stricter rules in `frontend/tools/oxlint`:
+The frontend is linted with Oxlint. A custom plugin in `frontend/tools/oxlint` adds stricter rules,
+for example against chained type assertions and against `typeof` checks where a value should be
+parsed at its I/O boundary:
 
 ```sh
 cd frontend
@@ -75,6 +81,8 @@ API, because the role is full-stack. These are the other changes to the starting
 
 - **.NET 10 instead of .NET 8.** .NET 8 reaches end of support on 10 November 2026. The `global.json`
   version was also invalid.
+- **Removed with the move to React:** the Razor views, jQuery and Bootstrap. The HTTPS redirect also
+  went, because the README rules out HTTPS and the redirect only produced a startup warning.
 - **Removed from version control:** build output and IDE files. There was no `.gitignore`, and more
   than half of the tracked files were generated.
 - **Changes to the repository interface.** I removed `Update`, because nothing edits a todo. I
