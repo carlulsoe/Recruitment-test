@@ -6,10 +6,13 @@ const todosKey = ["todos"];
 /**
  * Only the last change to finish refetches. An earlier refetch could return before
  * the server has handled a change still in flight, and undo its optimistic update.
+ *
+ * The refetch is not returned to the mutation, which would stay pending through the
+ * refetch's retries and hold back its own error message while the server is down.
  */
 function refetchWhenLastChangeSettles(queryClient: QueryClient) {
   if (queryClient.isMutating({ mutationKey: todosKey }) === 1) {
-    return queryClient.invalidateQueries({ queryKey: todosKey });
+    void queryClient.invalidateQueries({ queryKey: todosKey });
   }
 }
 
@@ -22,6 +25,9 @@ export function useCreateTodo() {
   return useMutation({
     mutationKey: todosKey,
     mutationFn: createTodo,
+    onSuccess: (created) => {
+      queryClient.setQueryData<Todo[]>(todosKey, (todos) => todos && [...todos, created]);
+    },
     onSettled: () => refetchWhenLastChangeSettles(queryClient),
   });
 }
@@ -54,6 +60,9 @@ export function useDeleteTodo(id: string) {
   return useMutation({
     mutationKey: todosKey,
     mutationFn: () => deleteTodo(id),
+    onSuccess: () => {
+      queryClient.setQueryData<Todo[]>(todosKey, (todos) => todos?.filter((todo) => todo.id !== id));
+    },
     onSettled: () => refetchWhenLastChangeSettles(queryClient),
   });
 }

@@ -52,7 +52,8 @@ function TodoList() {
 
   if (todos.isPending) return <p className="status">Loading…</p>;
 
-  if (todos.isError) {
+  // A failed refetch keeps the old data, and that list is better than an error page.
+  if (!todos.data) {
     return (
       <div className="status" role="alert">
         <p>Could not load your todos.</p>

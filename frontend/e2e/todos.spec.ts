@@ -106,3 +106,23 @@ test("offers a retry when loading fails", async ({ todoPage: page }) => {
 
   await expect(page.getByText("Nothing to do yet")).toBeVisible();
 });
+
+test("keeps the list and shows the failure when the server goes down", async ({ todoPage: page }) => {
+  await addTodo(page, "Buy milk");
+  let listRequests = 0;
+  await page.route("**/api/todos/**", (route) => route.abort());
+  await page.route("**/api/todos", (route) => {
+    listRequests++;
+    return route.abort();
+  });
+
+  await checkbox(page, "Buy milk").click();
+
+  await expect(row(page, "Buy milk").getByRole("alert")).toBeVisible({ timeout: 1_000 });
+  await expect(checkbox(page, "Buy milk")).not.toBeChecked();
+
+  // Wait until the refetch has used up its retries, then the list must still be there.
+  await expect.poll(() => listRequests, { timeout: 15_000 }).toBe(4);
+  await page.waitForTimeout(200);
+  await expect(row(page, "Buy milk")).toBeVisible();
+});
