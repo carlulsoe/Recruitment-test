@@ -1,0 +1,15 @@
+# .NET
+bin/
+obj/
+
+# Frontend
+node_modules/
+frontend/dist/
+# Vite builds the frontend into the web project's static files
+Todo/wwwroot/
+
+# IDEs
+.idea/
+.vs/
+.vscode/
+*.user
