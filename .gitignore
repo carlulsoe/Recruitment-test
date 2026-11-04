@@ -4,7 +4,8 @@ obj/
 
 # Frontend
 node_modules/
-frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
 # Vite builds the frontend into the web project's static files
 Todo/wwwroot/
 
