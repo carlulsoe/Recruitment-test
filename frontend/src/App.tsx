@@ -93,7 +93,9 @@ function TodoRow({ todo }: { todo: Todo }) {
           checked={todo.isComplete}
           // Ignored rather than disabled, so keyboard users keep their focus here.
           onChange={() => {
-            if (!toggleTodo.isPending) toggleTodo.mutate();
+            if (toggleTodo.isPending || deleteTodo.isPending) return;
+            deleteTodo.reset();
+            toggleTodo.mutate();
           }}
         />
         <span className={todo.isComplete ? "todo-title complete" : "todo-title"}>{todo.title}</span>
@@ -102,7 +104,10 @@ function TodoRow({ todo }: { todo: Todo }) {
         className="delete"
         aria-label={`Delete ${todo.title}`}
         disabled={deleteTodo.isPending}
-        onClick={() => deleteTodo.mutate()}
+        onClick={() => {
+          toggleTodo.reset();
+          deleteTodo.mutate();
+        }}
       >
         Delete
       </button>

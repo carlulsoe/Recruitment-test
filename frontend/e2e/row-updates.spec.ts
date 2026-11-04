@@ -1,5 +1,5 @@
 import { expect, type Page, type Route } from "@playwright/test";
-import { addTodo, checkbox, test } from "./helpers";
+import { addTodo, checkbox, row, test } from "./helpers";
 
 /** Holds the toggle request of one todo until the test releases it. */
 async function holdToggle(page: Page, title: string) {
@@ -51,4 +51,20 @@ test("a failed toggle rolls back only its own row", async ({ todoPage: page }) =
 
   await pending.route().continue();
   await expect(page.getByText("1 of 2 done")).toBeVisible();
+});
+
+test("a row's old error goes away when another action on it starts", async ({ todoPage: page }) => {
+  await addTodo(page, "Buy milk");
+  const milk = row(page, "Buy milk");
+  await page.route("**/api/todos/*", (route) =>
+    route.request().method() === "DELETE" ? route.fulfill({ status: 500 }) : route.continue(),
+  );
+
+  await milk.getByRole("button", { name: /Delete/ }).click();
+  await expect(milk.getByRole("alert")).toBeVisible();
+
+  await checkbox(page, "Buy milk").click();
+
+  await expect(page.getByText("1 of 1 done")).toBeVisible();
+  await expect(milk.getByRole("alert")).toBeHidden();
 });
