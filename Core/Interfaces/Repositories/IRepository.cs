@@ -1,10 +1,11 @@
 namespace Core.Interfaces.Repositories;
 
-public interface IRepository<T, in TK>
+public interface IRepository<T, in TK> where T : class
 {
     List<T> GetAll();
-    T GetById(TK id);
+    T? GetById(TK id);
     T Create(T entity);
-    T Update(T entity);
-    void Delete(TK id);
+
+    /// <returns>False if no entity has the given id.</returns>
+    bool Delete(TK id);
 }

@@ -1,4 +1,4 @@
-﻿namespace Core.Models;
+namespace Core.Models;
 
 public class Todo
 {
@@ -7,4 +7,10 @@ public class Todo
     public bool IsComplete { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public void Toggle()
+    {
+        IsComplete = !IsComplete;
+        CompletedAt = IsComplete ? DateTime.UtcNow : null;
+    }
 }

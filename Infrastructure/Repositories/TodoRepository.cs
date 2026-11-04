@@ -3,35 +3,75 @@ using Core.Models;
 
 namespace Infrastructure.Repositories;
 
+/// <summary>
+/// Keeps todos in memory for the lifetime of the process. It is registered as a
+/// singleton and so is shared between requests: every access takes the lock, and
+/// callers only get copies, so no one can change a stored todo outside the lock.
+/// </summary>
 public class TodoRepository : ITodoRepository
 {
+    private readonly Lock _lock = new();
+    private readonly List<Todo> _todos = [];
+
     public List<Todo> GetAll()
     {
-        throw new NotImplementedException();
+        lock (_lock)
+        {
+            return _todos.Select(Copy).ToList();
+        }
     }
 
-    public Todo GetById(Guid id)
+    public Todo? GetById(Guid id)
     {
-        throw new NotImplementedException();
+        lock (_lock)
+        {
+            var todo = Find(id);
+            return todo is null ? null : Copy(todo);
+        }
     }
 
     public Todo Create(Todo entity)
     {
-        throw new NotImplementedException();
+        var todo = new Todo
+        {
+            Id = Guid.NewGuid(),
+            Title = entity.Title,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        lock (_lock)
+        {
+            _todos.Add(todo);
+            return Copy(todo);
+        }
     }
 
-    public Todo Update(Todo entity)
+    public bool Delete(Guid id)
     {
-        throw new NotImplementedException();
+        lock (_lock)
+        {
+            return _todos.RemoveAll(todo => todo.Id == id) > 0;
+        }
     }
 
-    public void Delete(Guid id)
+    public Todo? ToggleTodo(Guid id)
     {
-        throw new NotImplementedException();
+        lock (_lock)
+        {
+            var todo = Find(id);
+            todo?.Toggle();
+            return todo is null ? null : Copy(todo);
+        }
     }
 
-    public void ToggleTodo(Guid id)
+    private Todo? Find(Guid id) => _todos.Find(todo => todo.Id == id);
+
+    private static Todo Copy(Todo todo) => new()
     {
-        throw new NotImplementedException();
-    }
+        Id = todo.Id,
+        Title = todo.Title,
+        IsComplete = todo.IsComplete,
+        CreatedAt = todo.CreatedAt,
+        CompletedAt = todo.CompletedAt,
+    };
 }
