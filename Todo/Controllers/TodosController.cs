@@ -22,7 +22,7 @@ public class TodosController(ITodoRepository repository) : ControllerBase
     [HttpPost]
     public ActionResult<TodoResponse> Create(CreateTodoRequest request)
     {
-        var todo = repository.Create(new Core.Models.Todo { Title = request.Title.Trim() });
+        var todo = repository.Create(new Core.Models.Todo { Title = request.Title });
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, TodoResponse.From(todo));
     }
 

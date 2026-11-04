@@ -79,6 +79,24 @@ public class TodosApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_measures_the_title_after_trimming()
+    {
+        var title = new string('x', CreateTodoRequest.MaxTitleLength) + "          ";
+
+        var response = await _client.PostAsJsonAsync("/api/todos", new { title });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_rejects_null_title()
+    {
+        var response = await _client.PostAsJsonAsync("/api/todos", new { title = (string?)null });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Toggle_marks_a_todo_complete_and_back()
     {
         var todo = await CreateTodo("Buy milk");
