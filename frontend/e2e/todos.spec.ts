@@ -64,7 +64,7 @@ test("shows a title as text, not as HTML", async ({ todoPage: page }) => {
 
 test("rolls back a toggle the server rejects", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
-  await page.route("**/toggle", (route) => route.fulfill({ status: 500 }));
+  await page.route("**/api/todos/*/*", (route) => route.fulfill({ status: 500 }));
 
   await checkbox(page, "Buy milk").click();
 
@@ -125,4 +125,23 @@ test("keeps the list and shows the failure when the server goes down", async ({ 
   await expect.poll(() => listRequests, { timeout: 15_000 }).toBe(4);
   await page.waitForTimeout(200);
   await expect(row(page, "Buy milk")).toBeVisible();
+});
+
+test("keeps what the user types while the previous todo is being saved", async ({ todoPage: page }) => {
+  let releaseCreate = () => {};
+  const createReleased = new Promise<void>((resolve) => (releaseCreate = resolve));
+  await page.route("**/api/todos", async (route) => {
+    if (route.request().method() === "POST") await createReleased;
+    await route.continue();
+  });
+  const input = page.getByLabel("New todo");
+
+  await input.fill("First");
+  await input.press("Enter");
+  await expect(input).toHaveValue("");
+  await input.pressSequentially("Second");
+  releaseCreate();
+
+  await expect(row(page, "First")).toBeVisible();
+  await expect(input).toHaveValue("Second");
 });

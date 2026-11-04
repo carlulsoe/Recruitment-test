@@ -20,7 +20,12 @@ function AddTodoForm() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!trimmedTitle || createTodo.isPending) return;
-    createTodo.mutate(trimmedTitle, { onSuccess: () => setTitle("") });
+    // Cleared at once, so that anything typed while saving is not lost. If saving
+    // fails, the title comes back unless the user has already started on a new one.
+    setTitle("");
+    createTodo.mutate(trimmedTitle, {
+      onError: () => setTitle((current) => current || trimmedTitle),
+    });
   }
 
   return (
