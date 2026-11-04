@@ -6,7 +6,7 @@ export interface Todo {
   completedAt: string | null;
 }
 
-/** Must match CreateTodoRequest.MaxTitleLength, which the API enforces. */
+/** Must match Todo.MaxTitleLength, which the API enforces. */
 export const MAX_TITLE_LENGTH = 200;
 
 async function request(path: string, init?: RequestInit): Promise<Response> {

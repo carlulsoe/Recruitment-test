@@ -23,3 +23,8 @@ export function row(page: Page, title: string) {
 export function checkbox(page: Page, title: string) {
   return row(page, title).getByRole("checkbox");
 }
+
+/** The list reports through aria-busy whether it is loading, including any retries. */
+export function list(page: Page) {
+  return page.getByRole("list");
+}
