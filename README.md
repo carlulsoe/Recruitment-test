@@ -69,8 +69,10 @@ API, because the role is full-stack. These are the other changes to the starting
   version was also invalid.
 - **Removed from version control:** build output and IDE files. There was no `.gitignore`, and more
   than half of the tracked files were generated.
-- **Changes to the repository interface.** I removed `Update`, because nothing edits a todo. A
-  missing id now gives `null` or `false`, because that is an expected outcome and not an exception.
+- **Changes to the repository interface.** I removed `Update`, because nothing edits a todo. I
+  replaced `ToggleTodo` with `SetComplete`, so that repeating a request is safe and a stale tab cannot
+  undo a change. A missing id now gives `null` or `false`, because that is an expected outcome and not
+  an exception.
 - **Added:** a test project and a Dockerfile.
 
 ## Architecture
@@ -83,27 +85,33 @@ Core/            Domain model and repository interfaces, with no dependencies
 Tests/           Repository tests and API tests over HTTP
 ```
 
-The dependencies point inwards: `Todo` and `Infrastructure` depend on `Core`, and `Core` depends on
-nothing. A database would take a new `ITodoRepository` implementation and a one-line change in
-`Program.cs`.
+The backend is a layered architecture in the onion style. The dependencies point inwards: `Todo` and
+`Infrastructure` depend on `Core`, and `Core` depends on nothing. `Todo` references `Infrastructure`
+only to choose the implementation in `Program.cs`, which is its composition root.
 
-| Endpoint                       | Result                                      |
-| ------------------------------ | ------------------------------------------- |
-| `GET /api/todos`               | `200` with all todos, oldest first          |
-| `GET /api/todos/{id}`          | `200`, or `404`                             |
-| `POST /api/todos`              | `201` with the new todo, or `400` if invalid |
-| `POST /api/todos/{id}/toggle`  | `200` with the updated todo, or `404`       |
-| `DELETE /api/todos/{id}`       | `204`, or `404`                             |
+The controller does not know how todos are stored, but moving to a database would take more than a
+new class. `ITodoRepository` would have to become asynchronous, the repository's lifetime would change
+from singleton to scoped, and the schema would need migrations.
+
+| Endpoint                         | Result                                                  |
+| -------------------------------- | ------------------------------------------------------- |
+| `GET /api/todos`                 | `200` with all todos, oldest first                      |
+| `GET /api/todos/{id}`            | `200`, or `404`                                         |
+| `POST /api/todos`                | `201` with the new todo, or `400` if invalid            |
+| `PUT /api/todos/{id}/completion` | `200` with the updated todo, `400` if invalid, or `404` |
+| `DELETE /api/todos/{id}`         | `204`, or `404`                                         |
 
 ## Design decisions
 
 - **Repository pattern and dependency injection.** The controller depends on an interface, which
   gives dependency inversion and makes the storage replaceable.
 - **No service layer.** With no business logic to hold, it would only forward calls. The one domain
-  rule, that `CompletedAt` follows `IsComplete`, is in `Todo.Toggle()`.
+  rule, that `CompletedAt` follows `IsComplete`, is in `Todo.SetComplete()`.
 - **A lock, and copies out of the repository.** The repository is a singleton shared between
   concurrent requests. Copies mean no one can change a stored todo outside the lock. A list keeps
   creation order, and the linear lookups don't matter at this size.
+- **An explicit completion state rather than a toggle.** The request states the wanted result, so it
+  is idempotent, and a rollback in the UI knows which value to restore.
 - **Separate API types.** `CreateTodoRequest` and `TodoResponse` keep the JSON contract independent
   of the domain model and mean a client cannot set fields such as `Id`.
 - **One origin.** ASP.NET Core serves the built frontend, so there is one thing to deploy and no CORS
@@ -111,20 +119,20 @@ nothing. A database would take a new `ITodoRepository` implementation and a one-
 - **TanStack Query for server state.** It handles caching, refetching and loading and error states,
   so the app needs no global state library. TanStack Router and Start were left out: there is one
   page and no need for server rendering.
-- **Optimistic toggle, confirmed delete.** A checkbox should respond at once and can simply roll back
-  on failure. A deleted row waits for the server, so it still exists if an error has to be shown.
-  Only the last change to finish refetches the list, so concurrent changes don't undo each other.
-- **Tests at the boundaries.** The API tests and the end-to-end tests use the real pipeline rather
-  than mocks. React components have no unit tests, because the end-to-end tests cover their behaviour
-  and the components hold little logic of their own.
+- **Optimistic completion, confirmed delete.** A checkbox should respond at once and can simply roll
+  back on failure. A deleted row waits for the server, so it still exists if an error has to be shown.
+  Only the last change to finish refetches the list, and nothing else refetches during a change, so
+  they don't undo each other.
+- **Tests at the boundaries.** The API tests go through the real ASP.NET Core pipeline, and the
+  end-to-end tests drive a real browser against the real backend. The end-to-end failure tests
+  intercept network requests on purpose, to produce failures on demand. React components have no unit
+  tests, because the end-to-end tests cover their behaviour and they hold little logic of their own.
 
 ## Known limitations and what I would do next
 
-- **Toggle is not idempotent.** A stale tab can undo a completion made in another tab. Setting the
-  state explicitly with `PUT /api/todos/{id}/complete` would fix that.
 - **The title limit is defined twice,** in the API and in the frontend. Generating the client from an
   OpenAPI document would remove the duplication.
-- **Real persistence** with EF Core and PostgreSQL, which would also make the in-memory lock
-  unnecessary.
+- **Real persistence** with EF Core and PostgreSQL, including the interface changes described under
+  Architecture. Atomic updates in the database would replace the in-memory lock.
 - **Users and authentication,** since all todos are currently shared.
 - **CI** that runs all the tests and builds the image on every push.
