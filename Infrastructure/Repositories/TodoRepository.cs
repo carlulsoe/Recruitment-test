@@ -5,8 +5,8 @@ namespace Infrastructure.Repositories;
 
 /// <summary>
 /// Keeps todos in memory for the lifetime of the process. It is registered as a
-/// singleton and so is shared between requests: every access takes the lock, and
-/// callers only get copies, so no one can change a stored todo outside the lock.
+/// singleton and so is shared between requests: the lock protects the list, and
+/// the todos themselves are immutable, so they can safely be handed out.
 /// </summary>
 public class TodoRepository : ITodoRepository
 {
@@ -17,7 +17,7 @@ public class TodoRepository : ITodoRepository
     {
         lock (_lock)
         {
-            return _todos.Select(Copy).ToList();
+            return [.. _todos];
         }
     }
 
@@ -25,24 +25,16 @@ public class TodoRepository : ITodoRepository
     {
         lock (_lock)
         {
-            var todo = Find(id);
-            return todo is null ? null : Copy(todo);
+            return _todos.Find(todo => todo.Id == id);
         }
     }
 
     public Todo Create(Todo entity)
     {
-        var todo = new Todo
-        {
-            Id = Guid.NewGuid(),
-            Title = entity.Title,
-            CreatedAt = DateTime.UtcNow,
-        };
-
         lock (_lock)
         {
-            _todos.Add(todo);
-            return Copy(todo);
+            _todos.Add(entity);
+            return entity;
         }
     }
 
@@ -54,24 +46,17 @@ public class TodoRepository : ITodoRepository
         }
     }
 
-    public Todo? SetComplete(Guid id, bool isComplete)
+    public Todo? SetComplete(Guid id, bool isComplete, DateTimeOffset now)
     {
         lock (_lock)
         {
-            var todo = Find(id);
-            todo?.SetComplete(isComplete);
-            return todo is null ? null : Copy(todo);
+            var index = _todos.FindIndex(todo => todo.Id == id);
+            if (index < 0)
+            {
+                return null;
+            }
+
+            return _todos[index] = _todos[index].WithCompletion(isComplete, now);
         }
     }
-
-    private Todo? Find(Guid id) => _todos.Find(todo => todo.Id == id);
-
-    private static Todo Copy(Todo todo) => new()
-    {
-        Id = todo.Id,
-        Title = todo.Title,
-        IsComplete = todo.IsComplete,
-        CreatedAt = todo.CreatedAt,
-        CompletedAt = todo.CompletedAt,
-    };
 }

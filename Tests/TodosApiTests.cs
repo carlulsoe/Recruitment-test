@@ -1,7 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using Core.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Todo.Models;
+using TodoItem = Core.Models.Todo;
 
 namespace Tests;
 
@@ -55,6 +61,7 @@ public class TodosApiTests : IDisposable
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
+    [InlineData("​")]
     public async Task Create_rejects_blank_title(string title)
     {
         var response = await _client.PostAsJsonAsync("/api/todos", new { title });
@@ -74,7 +81,7 @@ public class TodosApiTests : IDisposable
     [Fact]
     public async Task Create_rejects_title_over_the_limit()
     {
-        var title = new string('x', CreateTodoRequest.MaxTitleLength + 1);
+        var title = new string('x', TodoItem.MaxTitleLength + 1);
 
         var response = await _client.PostAsJsonAsync("/api/todos", new { title });
 
@@ -84,7 +91,7 @@ public class TodosApiTests : IDisposable
     [Fact]
     public async Task Create_measures_the_title_after_trimming()
     {
-        var title = new string('x', CreateTodoRequest.MaxTitleLength) + "          ";
+        var title = new string('x', TodoItem.MaxTitleLength) + "          ";
 
         var response = await _client.PostAsJsonAsync("/api/todos", new { title });
 
@@ -156,5 +163,88 @@ public class TodosApiTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/todos/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await SetCompletion(id, true)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync($"/api/todos/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Malformed_id_returns_400()
+    {
+        var completion = await _client.PutAsJsonAsync("/api/todos/abc/completion", new { isComplete = true });
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await _client.GetAsync("/api/todos/abc")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, completion.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _client.DeleteAsync("/api/todos/abc")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("{\"isComplete\":null}", "isComplete")]
+    [InlineData("{\"isComplete\":\"true\"}", "$.isComplete")]
+    [InlineData("{", "$")]
+    public async Task An_invalid_body_reports_only_what_is_wrong_with_it(string body, string field)
+    {
+        var todo = await CreateTodo("Buy milk");
+        var content = new StringContent(body, Encoding.UTF8, "application/json");
+
+        var response = await _client.PutAsync($"/api/todos/{todo.Id}/completion", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var errors = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        var reported = errors.EnumerateObject().Select(error => error.Name).ToList();
+        Assert.Equal([field], reported, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("")]
+    public async Task A_request_without_a_body_returns_400(string body)
+    {
+        var content = new StringContent(body, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/todos", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task An_unexpected_failure_returns_problem_details()
+    {
+        var client = _factory
+            .WithWebHostBuilder(host => host.ConfigureTestServices(services =>
+                services.AddSingleton<ITodoRepository, BrokenRepository>()))
+            .CreateClient();
+
+        var response = await client.GetAsync("/api/todos");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.DoesNotContain("Storage is broken", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Publishes_an_OpenAPI_document_with_the_endpoints()
+    {
+        var document = await _client.GetFromJsonAsync<JsonElement>("/openapi/v1.json");
+
+        var paths = document.GetProperty("paths").EnumerateObject().Select(path => path.Name).ToList();
+        Assert.Contains("/api/todos", paths);
+        Assert.Contains("/api/todos/{id}/completion", paths);
+    }
+
+    [Fact]
+    public async Task Reports_health()
+    {
+        var response = await _client.GetAsync("/healthz");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    private sealed class BrokenRepository : ITodoRepository
+    {
+        public List<TodoItem> GetAll() => throw new InvalidOperationException("Storage is broken");
+        public TodoItem? GetById(Guid id) => throw new InvalidOperationException("Storage is broken");
+        public TodoItem Create(TodoItem entity) => throw new InvalidOperationException("Storage is broken");
+        public bool Delete(Guid id) => throw new InvalidOperationException("Storage is broken");
+        public TodoItem? SetComplete(Guid id, bool isComplete, DateTimeOffset now) =>
+            throw new InvalidOperationException("Storage is broken");
     }
 }

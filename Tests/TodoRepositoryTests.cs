@@ -6,59 +6,61 @@ namespace Tests;
 
 public class TodoRepositoryTests
 {
+    private static readonly DateTimeOffset Now = new(2026, 11, 4, 12, 0, 0, TimeSpan.Zero);
+
     private readonly TodoRepository _repository = new();
 
-    [Fact]
-    public void Create_assigns_id_and_timestamp_and_starts_incomplete()
-    {
-        var created = _repository.Create(new TodoItem { Title = "Write tests" });
+    private Guid Add(string title) => _repository.Create(TodoItem.Create(title, Now)).Id;
 
-        Assert.NotEqual(Guid.Empty, created.Id);
-        Assert.NotEqual(default, created.CreatedAt);
-        Assert.False(created.IsComplete);
-        Assert.Null(created.CompletedAt);
+    [Fact]
+    public void Create_stores_the_todo_it_is_given()
+    {
+        var todo = TodoItem.Create("Write tests", Now);
+
+        Assert.Equal(todo, _repository.Create(todo));
+        Assert.Equal(todo, _repository.GetById(todo.Id));
     }
 
     [Fact]
     public void GetAll_returns_todos_in_creation_order()
     {
-        _repository.Create(new TodoItem { Title = "First" });
-        _repository.Create(new TodoItem { Title = "Second" });
+        Add("First");
+        Add("Second");
 
         Assert.Equal(["First", "Second"], _repository.GetAll().Select(todo => todo.Title));
     }
 
     [Fact]
-    public void SetComplete_sets_and_clears_completion()
+    public void SetComplete_stores_the_new_state()
     {
-        var id = _repository.Create(new TodoItem { Title = "Finish me" }).Id;
+        var id = Add("Finish me");
 
-        var completed = _repository.SetComplete(id, true);
-        Assert.True(completed!.IsComplete);
-        Assert.NotNull(completed.CompletedAt);
+        var completed = _repository.SetComplete(id, true, Now.AddHours(1));
 
-        var reopened = _repository.SetComplete(id, false);
-        Assert.False(reopened!.IsComplete);
-        Assert.Null(reopened.CompletedAt);
+        Assert.Equal(Now.AddHours(1), completed!.CompletedAt);
+        Assert.Equal(completed, _repository.GetById(id));
+
+        _repository.SetComplete(id, false, Now.AddHours(2));
+
+        Assert.False(_repository.GetById(id)!.IsComplete);
     }
 
     [Fact]
-    public void SetComplete_twice_keeps_the_first_completion_time()
+    public void SetComplete_changes_only_the_given_todo()
     {
-        var id = _repository.Create(new TodoItem { Title = "Finish me" }).Id;
+        var kept = Add("Keep");
+        var changed = Add("Change");
 
-        var first = _repository.SetComplete(id, true)!.CompletedAt;
-        Thread.Sleep(5);
-        var second = _repository.SetComplete(id, true)!.CompletedAt;
+        _repository.SetComplete(changed, true, Now);
 
-        Assert.Equal(first, second);
+        Assert.False(_repository.GetById(kept)!.IsComplete);
     }
 
     [Fact]
     public void Delete_removes_only_the_given_todo()
     {
-        var removed = _repository.Create(new TodoItem { Title = "Remove" }).Id;
-        var kept = _repository.Create(new TodoItem { Title = "Keep" }).Id;
+        var removed = Add("Remove");
+        var kept = Add("Keep");
 
         Assert.True(_repository.Delete(removed));
 
@@ -72,26 +74,53 @@ public class TodoRepositoryTests
         var missing = Guid.NewGuid();
 
         Assert.Null(_repository.GetById(missing));
-        Assert.Null(_repository.SetComplete(missing, true));
+        Assert.Null(_repository.SetComplete(missing, true, Now));
         Assert.False(_repository.Delete(missing));
     }
 
     [Fact]
-    public void Changing_a_returned_todo_does_not_change_the_stored_one()
+    public void Changing_a_returned_list_does_not_change_the_stored_one()
     {
-        var id = _repository.Create(new TodoItem { Title = "Original" }).Id;
+        Add("Original");
 
-        _repository.GetById(id)!.Title = "Changed";
-        _repository.GetAll()[0].Title = "Changed";
+        _repository.GetAll().Clear();
 
-        Assert.Equal("Original", _repository.GetById(id)!.Title);
+        Assert.Single(_repository.GetAll());
     }
 
     [Fact]
     public void Concurrent_creates_all_survive()
     {
-        Parallel.For(0, 1000, i => _repository.Create(new TodoItem { Title = $"Todo {i}" }));
+        Parallel.For(0, 1000, i => Add($"Todo {i}"));
 
         Assert.Equal(1000, _repository.GetAll().Count);
+    }
+
+    [Fact]
+    public void Concurrent_changes_and_deletes_do_not_interfere()
+    {
+        var toDelete = Enumerable.Range(0, 500).Select(i => Add($"Delete {i}")).ToList();
+        var toComplete = Enumerable.Range(0, 500).Select(i => Add($"Complete {i}")).ToList();
+
+        Parallel.For(0, 500, i =>
+        {
+            _repository.Delete(toDelete[i]);
+            _repository.SetComplete(toComplete[i], true, Now);
+        });
+
+        var remaining = _repository.GetAll();
+        Assert.Equal(toComplete, remaining.Select(todo => todo.Id));
+        Assert.All(remaining, todo => Assert.True(todo.IsComplete));
+    }
+
+    [Fact]
+    public void Concurrent_completions_of_one_todo_keep_a_single_completion_time()
+    {
+        var id = Add("Finish me");
+
+        var results = new TodoItem?[100];
+        Parallel.For(0, results.Length, i => results[i] = _repository.SetComplete(id, true, Now.AddSeconds(i)));
+
+        Assert.Single(results.Select(todo => todo!.CompletedAt).Distinct());
     }
 }
