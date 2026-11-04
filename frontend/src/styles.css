@@ -173,3 +173,7 @@ button.delete:hover:not(:disabled) {
   color: var(--danger);
   font-size: 0.875rem;
 }
+
+.error button {
+  padding: 0.125rem 0.5rem;
+}

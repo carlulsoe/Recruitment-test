@@ -1,5 +1,5 @@
-import { expect } from "@playwright/test";
-import { addTodo, checkbox, row, test } from "./helpers";
+import { expect, type Route } from "@playwright/test";
+import { addTodo, checkbox, list, row, test } from "./helpers";
 
 test("shows an empty state until a todo exists", async ({ todoPage: page }) => {
   await expect(page.getByText("Nothing to do yet")).toBeVisible();
@@ -59,12 +59,13 @@ test("shows a title as text, not as HTML", async ({ todoPage: page }) => {
 
   await addTodo(page, title);
 
-  await expect(page.locator(".todo img")).toHaveCount(0);
+  await expect(row(page, title)).toBeVisible();
+  await expect(page.getByRole("listitem").locator("img")).toHaveCount(0);
 });
 
-test("rolls back a toggle the server rejects", async ({ todoPage: page }) => {
+test("rolls back a change the server rejects", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
-  await page.route("**/api/todos/*/*", (route) => route.fulfill({ status: 500 }));
+  await page.route("**/api/todos/*/completion", (route) => route.fulfill({ status: 500 }));
 
   await checkbox(page, "Buy milk").click();
 
@@ -92,7 +93,7 @@ test("keeps the typed text when adding fails", async ({ todoPage: page }) => {
   await input.fill("Buy milk");
   await input.press("Enter");
 
-  await expect(page.locator(".add-form").getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Buy milk");
   await expect(input).toHaveValue("Buy milk");
 });
 
@@ -109,39 +110,101 @@ test("offers a retry when loading fails", async ({ todoPage: page }) => {
 
 test("keeps the list and shows the failure when the server goes down", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
-  let listRequests = 0;
   await page.route("**/api/todos/**", (route) => route.abort());
-  await page.route("**/api/todos", (route) => {
-    listRequests++;
-    return route.abort();
-  });
+  await page.route("**/api/todos", (route) => route.abort());
 
   await checkbox(page, "Buy milk").click();
 
-  await expect(row(page, "Buy milk").getByRole("alert")).toBeVisible({ timeout: 1_000 });
+  // The failure must not wait for the refetch, which is still retrying at this point.
+  await expect(row(page, "Buy milk").getByRole("alert")).toBeVisible();
+  await expect(list(page)).toHaveAttribute("aria-busy", "true");
   await expect(checkbox(page, "Buy milk")).not.toBeChecked();
 
-  // Wait until the refetch has used up its retries, then the list must still be there.
-  await expect.poll(() => listRequests, { timeout: 15_000 }).toBe(4);
-  await page.waitForTimeout(200);
+  // When the refetch has given up, the list must still be there.
+  await expect(list(page)).toHaveAttribute("aria-busy", "false", { timeout: 15_000 });
   await expect(row(page, "Buy milk")).toBeVisible();
 });
 
 test("keeps what the user types while the previous todo is being saved", async ({ todoPage: page }) => {
-  let releaseCreate = () => {};
-  const createReleased = new Promise<void>((resolve) => (releaseCreate = resolve));
-  await page.route("**/api/todos", async (route) => {
-    if (route.request().method() === "POST") await createReleased;
-    await route.continue();
-  });
+  let held: Route | undefined;
+  await page.route("**/api/todos", (route) =>
+    route.request().method() === "POST" ? void (held = route) : route.continue(),
+  );
   const input = page.getByLabel("New todo");
 
   await input.fill("First");
   await input.press("Enter");
   await expect(input).toHaveValue("");
   await input.pressSequentially("Second");
-  releaseCreate();
+  await expect.poll(() => held).toBeDefined();
+  await held!.continue();
 
   await expect(row(page, "First")).toBeVisible();
   await expect(input).toHaveValue("Second");
+});
+
+test("a failed todo can be tried again after starting on the next one", async ({ todoPage: page }) => {
+  let held: Route | undefined;
+  await page.route("**/api/todos", (route) =>
+    route.request().method() === "POST" ? void (held = route) : route.continue(),
+  );
+  const input = page.getByLabel("New todo");
+
+  await input.fill("First");
+  await input.press("Enter");
+  await input.pressSequentially("Second");
+  await expect.poll(() => held).toBeDefined();
+  await held!.fulfill({ status: 500 });
+
+  await expect(page.getByRole("alert")).toContainText("First");
+  await expect(input).toHaveValue("Second");
+
+  await page.unroute("**/api/todos");
+  await page.getByRole("button", { name: "Try again" }).click();
+
+  await expect(row(page, "First")).toBeVisible();
+  await expect(page.getByRole("alert")).toBeHidden();
+  await expect(input).toHaveValue("Second");
+  await expect(input).toBeFocused();
+});
+
+test("the input is ready for the next todo after adding one with the button", async ({ todoPage: page }) => {
+  await addTodo(page, "First");
+
+  await page.keyboard.type("Second");
+
+  await expect(page.getByLabel("New todo")).toHaveValue("Second");
+});
+
+test("reports failures at once while offline", async ({ todoPage: page, context }) => {
+  await addTodo(page, "Existing");
+  await context.setOffline(true);
+  const input = page.getByLabel("New todo");
+
+  await input.fill("Buy milk");
+  await input.press("Enter");
+  await expect(page.getByRole("alert")).toContainText("Buy milk");
+  await expect(input).toHaveValue("Buy milk");
+
+  await checkbox(page, "Existing").click();
+  await expect(row(page, "Existing").getByRole("alert")).toBeVisible();
+  await expect(checkbox(page, "Existing")).not.toBeChecked();
+
+  await row(page, "Existing").getByRole("button", { name: /Delete/ }).click();
+  await expect(row(page, "Existing").getByRole("alert")).toBeVisible();
+
+  await context.setOffline(false);
+  await input.press("Enter");
+  await expect(row(page, "Buy milk")).toBeVisible();
+});
+
+test("serves the built files compressed and with suitable caching", async ({ request }) => {
+  const index = await request.get("/");
+  expect(index.headers()["cache-control"]).toBe("no-cache");
+
+  const script = (await index.text()).match(/assets\/[^"]+\.js/)![0];
+  const asset = await request.get(`/${script}`);
+
+  expect(asset.headers()["cache-control"]).toContain("immutable");
+  expect(asset.headers()["content-encoding"]).toMatch(/br|gzip/);
 });

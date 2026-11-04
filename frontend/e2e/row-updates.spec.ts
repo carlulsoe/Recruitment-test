@@ -1,44 +1,61 @@
 import { expect, type Page, type Route } from "@playwright/test";
-import { addTodo, checkbox, row, test } from "./helpers";
+import { addTodo, checkbox, list, row, test } from "./helpers";
 
-/** Holds the toggle request of one todo until the test releases it. */
-async function holdToggle(page: Page, title: string) {
+/** Holds the completion request of one todo until the test releases it. */
+async function holdCompletion(page: Page, title: string) {
   const todos: { id: string; title: string }[] = await (await page.request.get("/api/todos")).json();
   const id = todos.find((todo) => todo.title === title)!.id;
   let held: Route | undefined;
-  const isHeld = new Promise<void>((resolve) => {
-    void page.route(`**/api/todos/${id}/*`, (route) => {
-      held = route;
-      resolve();
-    });
+  let markHeld!: () => void;
+  const isHeld = new Promise<void>((resolve) => (markHeld = resolve));
+  await page.route(`**/api/todos/${id}/completion`, (route) => {
+    held = route;
+    markHeld();
   });
   return { isHeld, route: () => held! };
 }
 
-test("a finished toggle does not undo another row's pending toggle", async ({ todoPage: page }) => {
+/** Counts the list requests the page sends from now on. */
+async function countListRequests(page: Page) {
+  const counter = { count: 0 };
+  await page.route("**/api/todos", (route) => {
+    if (route.request().method() === "GET") counter.count++;
+    return route.fallback();
+  });
+  return counter;
+}
+
+/** Lets the page finish reacting to what it has received. Takes no fixed amount of time. */
+async function settle(page: Page) {
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve)));
+}
+
+test("a finished change does not refetch over another row's pending change", async ({ todoPage: page }) => {
   await addTodo(page, "Slow");
   await addTodo(page, "Fast");
-  const slow = await holdToggle(page, "Slow");
+  const slow = await holdCompletion(page, "Slow");
+  const listRequests = await countListRequests(page);
 
   await checkbox(page, "Slow").click();
   await slow.isHeld;
-  const fastDone = page.waitForResponse("**/api/todos/*/*");
+  const fastDone = page.waitForResponse("**/api/todos/*/completion");
   await checkbox(page, "Fast").click();
-  await fastDone;
+  await (await fastDone).finished();
+  await settle(page);
 
-  // Long enough for a refetch to return and overwrite the pending row.
-  await page.waitForTimeout(500);
+  expect(listRequests.count).toBe(0);
   await expect(checkbox(page, "Slow")).toBeChecked();
 
   await slow.route().continue();
+  await expect.poll(() => listRequests.count).toBe(1);
   await expect(page.getByText("2 of 2 done")).toBeVisible();
 });
 
-test("a failed toggle rolls back only its own row", async ({ todoPage: page }) => {
+test("a failed change rolls back only its own row", async ({ todoPage: page }) => {
   await addTodo(page, "Failing");
   await addTodo(page, "Pending");
-  const failing = await holdToggle(page, "Failing");
-  const pending = await holdToggle(page, "Pending");
+  const failing = await holdCompletion(page, "Failing");
+  const pending = await holdCompletion(page, "Pending");
 
   await checkbox(page, "Failing").click();
   await failing.isHeld;
@@ -74,31 +91,34 @@ async function returnToTab(page: Page) {
   await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
 }
 
-test("returning to the tab does not undo a pending toggle", async ({ todoPage: page }) => {
+test("returning to the tab refetches, but not during a pending change", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
-  const held = await holdToggle(page, "Buy milk");
+  const held = await holdCompletion(page, "Buy milk");
+  const listRequests = await countListRequests(page);
 
   await checkbox(page, "Buy milk").click();
   await held.isHeld;
   await returnToTab(page);
+  await settle(page);
 
-  // Long enough for a refetch to return and overwrite the pending row.
-  await page.waitForTimeout(500);
+  expect(listRequests.count).toBe(0);
   await expect(checkbox(page, "Buy milk")).toBeChecked();
 
   await held.route().continue();
+  await expect.poll(() => listRequests.count).toBe(1);
+  await expect(list(page)).toHaveAttribute("aria-busy", "false");
   await expect(page.getByText("1 of 1 done")).toBeVisible();
+
+  await returnToTab(page);
+  await expect.poll(() => listRequests.count).toBe(2);
 });
 
-test("a failed toggle agrees with the server even after a refetch", async ({ todoPage: page }) => {
+test("a failed change rolls back when the list cannot be reloaded either", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
-  const held = await holdToggle(page, "Buy milk");
+  const held = await holdCompletion(page, "Buy milk");
 
   await checkbox(page, "Buy milk").click();
   await held.isHeld;
-  await returnToTab(page);
-  await page.waitForTimeout(500);
-  // With the list unavailable too, no later refetch can hide a wrong rollback.
   await page.route("**/api/todos", (route) => route.abort());
   await held.route().fulfill({ status: 500 });
 
@@ -116,7 +136,7 @@ test("marking a todo done in a stale tab keeps it done", async ({ todoPage: page
   await checkbox(page, "Buy milk").click();
   await expect(page.getByText("1 of 1 done")).toBeVisible();
 
-  const done = staleTab.waitForResponse("**/api/todos/*/*");
+  const done = staleTab.waitForResponse("**/api/todos/*/completion");
   await checkbox(staleTab, "Buy milk").click();
   await done;
 

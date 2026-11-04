@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { MAX_TITLE_LENGTH, type Todo } from "./api";
 import { useCreateTodo, useDeleteTodo, useSetTodoComplete, useTodos } from "./useTodos";
 
@@ -15,27 +15,36 @@ export function App() {
 function AddTodoForm() {
   const [title, setTitle] = useState("");
   const createTodo = useCreateTodo();
+  const inputRef = useRef<HTMLInputElement>(null);
   const trimmedTitle = title.trim();
+
+  function save(titleToSave: string) {
+    inputRef.current?.focus();
+    // If saving fails, the title comes back unless the user has started on a new one.
+    // In that case the error message offers to try it again.
+    createTodo.mutate(titleToSave, {
+      onError: () => setTitle((current) => current || titleToSave),
+    });
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!trimmedTitle || createTodo.isPending) return;
-    // Cleared at once, so that anything typed while saving is not lost. If saving
-    // fails, the title comes back unless the user has already started on a new one.
+    // Cleared at once, so that anything typed while saving is not lost.
     setTitle("");
-    createTodo.mutate(trimmedTitle, {
-      onError: () => setTitle((current) => current || trimmedTitle),
-    });
+    save(trimmedTitle);
   }
 
   return (
     <form className="add-form" onSubmit={handleSubmit}>
       <div className="add-form-row">
         <input
+          ref={inputRef}
           aria-label="New todo"
           placeholder="What needs doing?"
           value={title}
           maxLength={MAX_TITLE_LENGTH}
+          // oxlint-disable-next-line jsx-a11y/no-autofocus -- Adding a todo is what this page is for.
           autoFocus
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -45,7 +54,14 @@ function AddTodoForm() {
       </div>
       {createTodo.isError && (
         <p className="error" role="alert">
-          Could not add the todo. Please try again.
+          Could not add "{createTodo.variables}".{" "}
+          {createTodo.variables === trimmedTitle ? (
+            "Please try again."
+          ) : (
+            <button type="button" onClick={() => save(createTodo.variables)}>
+              Try again
+            </button>
+          )}
         </p>
       )}
     </form>
@@ -78,7 +94,7 @@ function TodoList() {
       <p className="summary">
         {completed} of {todos.data.length} done
       </p>
-      <ul className="todo-list">
+      <ul className="todo-list" aria-busy={todos.isFetching}>
         {todos.data.map((todo) => (
           <TodoRow key={todo.id} todo={todo} />
         ))}
