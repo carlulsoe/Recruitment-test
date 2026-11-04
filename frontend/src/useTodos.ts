@@ -17,7 +17,17 @@ function refetchWhenLastChangeSettles(queryClient: QueryClient) {
 }
 
 export function useTodos() {
-  return useQuery({ queryKey: todosKey, queryFn: getTodos });
+  const queryClient = useQueryClient();
+
+  // Refetching mid-change could overwrite its optimistic update. The change refetches when done.
+  const refetchUnlessChanging = () => queryClient.isMutating({ mutationKey: todosKey }) === 0;
+
+  return useQuery({
+    queryKey: todosKey,
+    queryFn: getTodos,
+    refetchOnWindowFocus: refetchUnlessChanging,
+    refetchOnReconnect: refetchUnlessChanging,
+  });
 }
 
 export function useCreateTodo() {

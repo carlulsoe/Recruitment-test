@@ -74,6 +74,22 @@ async function returnToTab(page: Page) {
   await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
 }
 
+test("returning to the tab does not undo a pending toggle", async ({ todoPage: page }) => {
+  await addTodo(page, "Buy milk");
+  const held = await holdToggle(page, "Buy milk");
+
+  await checkbox(page, "Buy milk").click();
+  await held.isHeld;
+  await returnToTab(page);
+
+  // Long enough for a refetch to return and overwrite the pending row.
+  await page.waitForTimeout(500);
+  await expect(checkbox(page, "Buy milk")).toBeChecked();
+
+  await held.route().continue();
+  await expect(page.getByText("1 of 1 done")).toBeVisible();
+});
+
 test("a failed toggle agrees with the server even after a refetch", async ({ todoPage: page }) => {
   await addTodo(page, "Buy milk");
   const held = await holdToggle(page, "Buy milk");
