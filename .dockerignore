@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+**/node_modules/
+Todo/wwwroot/
+.git/
+.idea/
